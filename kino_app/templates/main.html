@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ПИРАТИК - Фильмотека</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{% url 'home' %}">ПИРАТИК</a>
+        </div>
+        
+        <div class="header-controls">
+            <!-- Фильтр по жанрам -->
+            <div class="genre-filter-container">
+                <button type="button" class="filter-btn" id="filterToggle">
+                    <span>🎬 Фильтр по жанрам</span>
+                    <span class="arrow">▼</span>
+                </button>
+                
+                <div class="filter-dropdown-content" id="filterDropdown">
+                    <form action="{% url 'home' %}" method="get" id="genreForm">
+                        <input type="hidden" name="search" value="{{ search }}">
+                        
+                        <div class="filter-header">
+                            <h4 style="color: white; margin-bottom: 15px;">Выберите жанры:</h4>
+                        </div>
+                        <div class="filter-options">
+                            {% for genre in genres %}
+                            <label class="checkbox-label">
+                                <input type="checkbox" 
+                                       name="genre" 
+                                       value="{{ genre.id }}"
+                                       {% if genre.id|stringformat:"s" in selected_genres %}checked{% endif %}
+                                       onchange="updateForm()">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-text">{{ genre.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        
+                        <div style="margin-top: 20px; display: flex; gap: 10px;">
+                            <button type="submit" class="submit-btn" style="flex: 1; margin: 0;">Применить</button>
+                            <button type="button" onclick="closeFilter()" class="submit-btn" style="flex: 1; margin: 0; background: #666;">Закрыть</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Поиск -->
+            <form action="{% url 'home' %}" method="get" class="search-box">
+                <input type="text" name="search" placeholder="Поиск..." 
+                       value="{{ search|default:'' }}">
+                <button type="submit">Найти</button>
+            </form>
+        </div>
+        
+        <!-- Кнопки справа -->
+        <div class="header-right-buttons">
+            <!-- Кнопка переключения темы -->
+            <div class="theme-toggle" id="themeToggle">
+                <span class="theme-icon">🌙</span>
+                <span>Тема</span>
+            </div>
+            
+            <!-- GitHub -->
+            <a href="https://github.com/VOLEV0Y" target="_blank" class="github-link">
+                <span class="github-icon">💻</span>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </header>
+    
+    <!-- Выбранные жанры -->
+    {% if selected_genres %}
+    <div style="max-width: 1300px; margin: 10px auto; padding: 0 20px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="color: #88ccff;">Выбранные жанры:</span>
+            {% for genre_id in selected_genres %}
+                {% for genre in genres %}
+                    {% if genre.id|stringformat:"s" == genre_id %}
+                    <span style="background: rgba(0, 136, 255, 0.2); color: #88ccff; padding: 5px 10px; border-radius: 15px; font-size: 14px; border: 1px solid rgba(0, 136, 255, 0.5);">
+                        {{ genre.name }}
+                        <a href="javascript:void(0)" onclick="removeGenre('{{ genre.id }}')" style="color: #ff6666; margin-left: 5px; text-decoration: none;">×</a>
+                    </span>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% if selected_genres %}
+            <a href="{% url 'home' %}{% if search %}?search={{ search }}{% endif %}" style="color: #ff9966; font-size: 14px;">
+                Сбросить все
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="movies-grid">
+        {% for film in films %}
+        <a href="{% url 'film_detail' film.id %}" class="movie-card">
+            <div class="poster">
+                {% if film.poster %}
+                    <img src="{{ film.poster.url }}" alt="{{ film.title }}">
+                {% else %}
+                    <span>🎬</span>
+                {% endif %}
+                <div class="rating">
+                    {{ film.get_average_rating|default:"-" }}
+                </div>
+                {% if film.trailer_file %}
+                <div class="has-trailer">
+                    ▶ Трейлер
+                </div>
+                {% endif %}
+            </div>
+            <div class="movie-info">
+                <div class="movie-title">{{ film.title }}</div>
+                <div class="movie-details">
+                    <span class="year">{{ film.year }}</span>
+                    <span class="genre">
+                        {% for genre in film.genres.all %}
+                            {{ genre.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </span>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: #88ccff;">
+            <h3>Фильмы не найдены</h3>
+            <p>Попробуйте изменить параметры поиска</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <footer>
+        <div class="copyright">
+            © 2026 ПИРАТИК. Персональная фильмотека с отзывами
+        </div>
+    </footer>
+    
+    <script>
+        // Управление фильтром
+        let isFilterOpen = false;
+        const filterToggle = document.getElementById('filterToggle');
+        const filterDropdown = document.getElementById('filterDropdown');
+        
+        if (filterToggle && filterDropdown) {
+            // Показать/скрыть фильтр
+            filterToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleFilter();
+            });
+            
+            // Закрыть при клике вне фильтра
+            document.addEventListener('click', function(e) {
+                if (isFilterOpen && !filterDropdown.contains(e.target) && !filterToggle.contains(e.target)) {
+                    closeFilter();
+                }
+            });
+            
+            // Закрыть при нажатии Esc
+            document.addEventListener('keydown', function(e) {
+                if (isFilterOpen && e.key === 'Escape') {
+                    closeFilter();
+                }
+            });
+        }
+        
+        function toggleFilter() {
+            isFilterOpen = !isFilterOpen;
+            if (isFilterOpen) {
+                filterDropdown.classList.add('show');
+                filterToggle.querySelector('.arrow').textContent = '▲';
+            } else {
+                filterDropdown.classList.remove('show');
+                filterToggle.querySelector('.arrow').textContent = '▼';
+            }
+        }
+        
+        function closeFilter() {
+            isFilterOpen = false;
+            filterDropdown.classList.remove('show');
+            filterToggle.querySelector('.arrow').textContent = '▼';
+        }
+        
+        function updateForm() {
+            // Можно добавить логику для предварительного обновления формы
+            console.log('Жанры обновлены');
+        }
+        
+        function removeGenre(genreId) {
+            const checkboxes = document.querySelectorAll('#filterDropdown input[name="genre"]');
+            checkboxes.forEach(checkbox => {
+                if (checkbox.value === genreId) {
+                    checkbox.checked = false;
+                }
+            });
+            document.getElementById('genreForm').submit();
+        }
+        
+        // Функция переключения темы
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('.theme-icon');
+        
+        // Проверяем сохраненную тему в localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeIcon.textContent = '☀️';
+            themeToggle.querySelector('span:last-child').textContent = 'Тема';
+        } else {
+            document.body.classList.remove('light-theme');
+            themeIcon.textContent = '🌙';
+            themeToggle.querySelector('span:last-child').textContent = 'Тема';
+        }
+        
+        // Обработчик клика по кнопке темы
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+            
+            if (document.body.classList.contains('light-theme')) {
+                localStorage.setItem('theme', 'light');
+                themeIcon.textContent = '☀️';
+                themeToggle.querySelector('span:last-child').textContent = 'Тема';
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.textContent = '🌙';
+                themeToggle.querySelector('span:last-child').textContent = 'Тема';
+            }
+        });
+    </script>
+</body>
+</html>

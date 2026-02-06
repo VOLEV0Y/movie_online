@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ПИРАТИК - {{ film.title }}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <style>
+        /* Дополнительные стили для видео плеера */
+        #trailerVideo {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            background: #000;
+        }
+        
+        .video-controls-fallback {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .video-controls-fallback button {
+            background: #0088ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{% url 'home' %}">ПИРАТИК</a>
+        </div>
+        
+        <div class="header-controls">
+            <!-- Поиск -->
+            <form action="{% url 'home' %}" method="get" class="search-box">
+                <input type="text" name="search" placeholder="Поиск..." 
+                       value="{{ search|default:'' }}">
+                <button type="submit">Найти</button>
+            </form>
+        </div>
+        
+        <!-- Кнопки справа -->
+        <div class="header-right-buttons">
+            <!-- Кнопка переключения темы -->
+            <div class="theme-toggle" id="themeToggle">
+                <span class="theme-icon">🌙</span>
+                <span>Тема</span>
+            </div>
+            
+            <!-- GitHub -->
+            <a href="https://github.com/VOLEV0Y" target="_blank" class="github-link">
+                <span class="github-icon">💻</span>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </header>
+    
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="film-detail-container">
+        <div class="film-content">
+            <div class="film-poster">
+                {% if film.poster %}
+                    <img src="{{ film.poster.url }}" alt="{{ film.title }}">
+                {% else %}
+                    <span>🎬</span>
+                {% endif %}
+            </div>
+            
+            <div class="film-info">
+                <h1 class="film-title">{{ film.title }}</h1>
+                <div class="film-meta">
+                    <span>{{ film.year }}</span>
+                    <span>
+                        {% for genre in film.genres.all %}
+                            {{ genre.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </span>
+                    <span>{{ film.director|default:"-" }}</span>
+                    <div class="film-rating">{{ film.get_average_rating|default:"0.0" }}/10</div>
+                </div>
+                
+                {% if film.description %}
+                    <div class="film-description">
+                        {{ film.description|linebreaks }}
+                    </div>
+                {% endif %}
+                
+                <div class="action-buttons">
+                    {% if film.trailer_file %}
+                    <button class="action-btn trailer-btn" onclick="scrollToTrailer()">
+                        <span>🎬</span>
+                        <span>Смотреть трейлер</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if film.trailer_file %}
+        <div class="video-player-container" id="trailer-container">
+            <h2 style="color: white; margin-bottom: 20px; font-size: 24px;">Трейлер</h2>
+            
+            <div class="custom-video-player">
+                <video id="trailerVideo" controls controlsList="nodownload" preload="metadata">
+                    <source src="{{ film.trailer_file.url }}" type="video/mp4">
+                    Ваш браузер не поддерживает воспроизведение MP4 видео.
+                </video>
+            </div>
+            
+            <!-- Fallback controls если нативные не работают -->
+            <div class="video-controls-fallback" id="fallbackControls">
+                <button onclick="playVideo()">▶ Воспроизвести</button>
+                <button onclick="pauseVideo()">⏸ Пауза</button>
+                <button onclick="toggleMute()">🔇</button>
+                <input type="range" id="videoSeek" min="0" max="100" value="0" oninput="seekVideo(this.value)" style="width: 300px;">
+            </div>
+        </div>
+        {% else %}
+        <div class="video-player-container">
+            <h2 style="color: white; margin-bottom: 20px; font-size: 24px;">Трейлер</h2>
+            <div class="no-trailer">
+                <h3>Трейлер пока не добавлен</h3>
+                <p>Чтобы добавить трейлер:</p>
+                <ol style="text-align: left; max-width: 500px; margin: 20px auto; color: #aaddff;">
+                    <li>Скачайте трейлер в формате MP4</li>
+                    <li>В админ-панели откройте этот фильм</li>
+                    <li>В поле "Видеофайл трейлера" загрузите MP4 файл</li>
+                    <li>Сохраните изменения</li>
+                </ol>
+                <div style="margin-top: 30px; padding: 15px; background: rgba(0, 136, 255, 0.1); border-radius: 10px; border: 1px solid #0088ff;">
+                    <p style="color: #88ccff; margin: 0;">
+                        <strong>Примечание:</strong> Поддерживается только формат MP4. Максимальный размер файла зависит от настроек сервера.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="reviews-section">
+            <h2>Отзывы ({{ film.reviews.count }})</h2>
+            
+            <form method="post" class="review-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Ваше имя:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Ваш Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rating">Оценка (от 1 до 10):</label>
+                    <select id="rating" name="rating" required>
+                        <option value="">Выберите оценку</option>
+                        <option value="1">1 - Ужасно</option>
+                        <option value="2">2 - Очень плохо</option>
+                        <option value="3">3 - Плохо</option>
+                        <option value="4">4 - Ниже среднего</option>
+                        <option value="5">5 - Средне</option>
+                        <option value="6">6 - Выше среднего</option>
+                        <option value="7">7 - Хорошо</option>
+                        <option value="8">8 - Очень хорошо</option>
+                        <option value="9">9 - Отлично</option>
+                        <option value="10">10 - Шедевр</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="comment">Ваш комментарий:</label>
+                    <textarea id="comment" name="comment" required></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">Оставить отзыв</button>
+            </form>
+            
+            <div class="reviews-list">
+                {% for review in reviews %}
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="review-author">{{ review.name }}</span>
+                        <span class="review-rating">{{ review.rating }}/10</span>
+                    </div>
+                    <p class="review-text">{{ review.comment|linebreaks }}</p>
+                    <div class="review-date">{{ review.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; color: #88ccff; padding: 40px;">
+                    <h3>Пока нет отзывов</h3>
+                    <p>Будьте первым, кто оставит отзыв!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="copyright">
+            © 2026 ПИРАТИК. Персональная фильмотека с отзывами
+        </div>
+    </footer>
+    
+    <script>
+        // Плавный скролл к трейлеру
+        function scrollToTrailer() {
+            const trailerElement = document.getElementById('trailer-container');
+            if (trailerElement) {
+                trailerElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+        
+        // Выбор оценки по умолчанию
+        document.addEventListener('DOMContentLoaded', function() {
+            const ratingSelect = document.getElementById('rating');
+            if (ratingSelect) {
+                ratingSelect.value = '5';
+            }
+            
+            // Проверяем работоспособность видео
+            const video = document.getElementById('trailerVideo');
+            if (video) {
+                setupVideoPlayer(video);
+            }
+        });
+        
+        // Настройка видео плеера
+        function setupVideoPlayer(video) {
+            const fallbackControls = document.getElementById('fallbackControls');
+            
+            // Проверяем, загружается ли видео
+            video.addEventListener('error', function(e) {
+                console.error('Ошибка загрузки видео:', e);
+                if (fallbackControls) {
+                    fallbackControls.style.display = 'block';
+                }
+            });
+            
+            video.addEventListener('loadeddata', function() {
+                console.log('Видео данные загружены');
+            });
+            
+            video.addEventListener('canplay', function() {
+                console.log('Видео готово к воспроизведению');
+            });
+            
+            // Обновление позиции перемотки
+            video.addEventListener('timeupdate', function() {
+                const seekBar = document.getElementById('videoSeek');
+                if (seekBar) {
+                    const percent = (video.currentTime / video.duration) * 100;
+                    seekBar.value = percent;
+                }
+            });
+        }
+        
+        // Fallback функции для управления видео
+        function playVideo() {
+            const video = document.getElementById('trailerVideo');
+            if (video) video.play();
+        }
+        
+        function pauseVideo() {
+            const video = document.getElementById('trailerVideo');
+            if (video) video.pause();
+        }
+        
+        function toggleMute() {
+            const video = document.getElementById('trailerVideo');
+            if (video) video.muted = !video.muted;
+        }
+        
+        function seekVideo(percent) {
+            const video = document.getElementById('trailerVideo');
+            if (video && video.duration) {
+                video.currentTime = (percent / 100) * video.duration;
+            }
+        }
+        
+        // Функция переключения темы
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('.theme-icon');
+        
+        // Проверяем сохраненную тему в localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeIcon.textContent = '☀️';
+            themeToggle.querySelector('span:last-child').textContent = 'Тема';
+        } else {
+            document.body.classList.remove('light-theme');
+            themeIcon.textContent = '🌙';
+            themeToggle.querySelector('span:last-child').textContent = 'Тема';
+        }
+        
+        // Обработчик клика по кнопке темы
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+            
+            if (document.body.classList.contains('light-theme')) {
+                localStorage.setItem('theme', 'light');
+                themeIcon.textContent = '☀️';
+                themeToggle.querySelector('span:last-child').textContent = 'Тема';
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.textContent = '🌙';
+                themeToggle.querySelector('span:last-child').textContent = 'Тема';
+            }
+        });
+    </script>
+</body>
+</html>
