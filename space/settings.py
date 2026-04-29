@@ -1,28 +1,24 @@
 """
 Django settings for space project.
-Production-ready configuration for Railway.
+Локальная разработка (DEBUG = True, статика раздаётся автоматически)
 """
 
 import os
 from pathlib import Path
 
-import dj_database_url
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# Читаем SECRET_KEY из переменных окружения, если нет — берём временный (только для локальной разработки)
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-rf=13ys@tn=-s9_=1(+2!+gy$35*8j$o&jys0i+^ucl@2_9#q9')
+# Секретный ключ (для разработки можно оставить как есть)
+SECRET_KEY = 'django-insecure-rf=13ys@tn=-s9_=1(+2!+gy$35*8j$o&jys0i+^ucl@2_9#q9'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# На Railway всегда должно быть False
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+# Включаем режим отладки – Django сам будет раздавать статику
+DEBUG = True
 
-# Разрешаем все хосты на время теста, потом можно заменить на конкретный домен Railway
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# Разрешаем все хосты для локальной разработки
+ALLOWED_HOSTS = ['*']
 
-# Application definition
+# Приложения
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,12 +26,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'kino_app',
+    'kino_app',              # ваше приложение
 ]
 
+# Middleware (без WhiteNoise, он не нужен при DEBUG=True)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # Добавлено для статики
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,13 +59,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'space.wsgi.application'
 
-# Database — читаем DATABASE_URL из переменных окружения (Railway подставляет автоматически)
-# Если переменной нет — используем SQLite (для локальной разработки)
+# База данных – SQLite для локальной разработки
 DATABASES = {
-    'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR / "db.sqlite3"}')
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
-# Password validation
+# Валидация паролей (можно оставить как есть)
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -77,19 +75,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
-LANGUAGE_CODE = 'ru-ru'        
-TIME_ZONE = 'Europe/Moscow'     
+# Интернационализация
+LANGUAGE_CODE = 'ru-ru'
+TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Статические файлы (CSS, JS, картинки)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'        
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATIC_ROOT не указываем – при DEBUG=True Django ищет static в папках приложений
 
+# Медиафайлы (загружаемые пользователями постеры, трейлеры)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
