@@ -1,24 +1,16 @@
-"""
-Django settings for space project.
-Локальная разработка (DEBUG = True, статика раздаётся автоматически)
-"""
-
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Секретный ключ (для разработки можно оставить как есть)
-SECRET_KEY = 'django-insecure-rf=13ys@tn=-s9_=1(+2!+gy$35*8j$o&jys0i+^ucl@2_9#q9'
+# Секретный ключ – для безопасности вынеси в переменную окружения на Railway
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'замени-на-свой-случайный-ключ')
 
-# Включаем режим отладки – Django сам будет раздавать статику
-DEBUG = True
+# На продакшене DEBUG обязательно False!
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Разрешаем все хосты для локальной разработки
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']  # или укажи конкретный домен .railway.app
 
-# Приложения
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -26,12 +18,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'kino_app',              # ваше приложение
+    'kino_app',
 ]
 
-# Middleware (без WhiteNoise, он не нужен при DEBUG=True)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- обязательно после SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -59,7 +51,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'space.wsgi.application'
 
-# База данных – SQLite для локальной разработки
+# База данных – пока оставь SQLite, потом можно перейти на PostgreSQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -67,25 +59,26 @@ DATABASES = {
     }
 }
 
-# Валидация паролей (можно оставить как есть)
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+# Валидация паролей (скопируй из своего старого settings, если там было)
+AUTH_PASSWORD_VALIDATORS = [...]
 
-# Интернационализация
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# Статические файлы (CSS, JS, картинки)
+# ----- СТАТИЧЕСКИЕ ФАЙЛЫ (ВАЖНО) -----
 STATIC_URL = '/static/'
-# STATIC_ROOT не указываем – при DEBUG=True Django ищет static в папках приложений
+# Папка, куда собираются все статические файлы для продакшена
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Папки, где Django будет искать статику (твоя папка static в корне)
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',   # <-- указываем папку со style.css
+]
+# Сжатие и кэширование через whitenoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Медиафайлы (загружаемые пользователями постеры, трейлеры)
+# Медиафайлы (постеры, загрузки пользователей)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
