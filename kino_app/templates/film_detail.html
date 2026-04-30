@@ -6,31 +6,6 @@
     <title>ПИРАТИК - {{ film.title }}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <style>
-        /* Дополнительные стили для видео плеера */
-        #trailerVideo {
-            width: 100%;
-            height: auto;
-            max-height: 70vh;
-            background: #000;
-        }
-        
-        .video-controls-fallback {
-            display: none;
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .video-controls-fallback button {
-            background: #0088ff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
     <header>
@@ -39,7 +14,6 @@
         </div>
         
         <div class="header-controls">
-            <!-- Поиск -->
             <form action="{% url 'home' %}" method="get" class="search-box">
                 <input type="text" name="search" placeholder="Поиск..." 
                        value="{{ search|default:'' }}">
@@ -47,15 +21,12 @@
             </form>
         </div>
         
-        <!-- Кнопки справа -->
         <div class="header-right-buttons">
-            <!-- Кнопка переключения темы -->
             <div class="theme-toggle" id="themeToggle">
                 <span class="theme-icon">🌙</span>
                 <span>Тема</span>
             </div>
             
-            <!-- GitHub -->
             <a href="https://github.com/VOLEV0Y" target="_blank" class="github-link">
                 <span class="github-icon">💻</span>
                 <span>GitHub</span>
@@ -124,7 +95,6 @@
                 </video>
             </div>
             
-            <!-- Fallback controls если нативные не работают -->
             <div class="video-controls-fallback" id="fallbackControls">
                 <button onclick="playVideo()">▶ Воспроизвести</button>
                 <button onclick="pauseVideo()">⏸ Пауза</button>
@@ -221,7 +191,6 @@
     </footer>
     
     <script>
-        // Плавный скролл к трейлеру
         function scrollToTrailer() {
             const trailerElement = document.getElementById('trailer-container');
             if (trailerElement) {
@@ -232,25 +201,21 @@
             }
         }
         
-        // Выбор оценки по умолчанию
         document.addEventListener('DOMContentLoaded', function() {
             const ratingSelect = document.getElementById('rating');
             if (ratingSelect) {
                 ratingSelect.value = '5';
             }
             
-            // Проверяем работоспособность видео
             const video = document.getElementById('trailerVideo');
             if (video) {
                 setupVideoPlayer(video);
             }
         });
         
-        // Настройка видео плеера
         function setupVideoPlayer(video) {
             const fallbackControls = document.getElementById('fallbackControls');
             
-            // Проверяем, загружается ли видео
             video.addEventListener('error', function(e) {
                 console.error('Ошибка загрузки видео:', e);
                 if (fallbackControls) {
@@ -266,7 +231,6 @@
                 console.log('Видео готово к воспроизведению');
             });
             
-            // Обновление позиции перемотки
             video.addEventListener('timeupdate', function() {
                 const seekBar = document.getElementById('videoSeek');
                 if (seekBar) {
@@ -276,7 +240,6 @@
             });
         }
         
-        // Fallback функции для управления видео
         function playVideo() {
             const video = document.getElementById('trailerVideo');
             if (video) video.play();
@@ -299,11 +262,9 @@
             }
         }
         
-        // Функция переключения темы
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = themeToggle.querySelector('.theme-icon');
         
-        // Проверяем сохраненную тему в localStorage
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.body.classList.add('light-theme');
@@ -315,7 +276,6 @@
             themeToggle.querySelector('span:last-child').textContent = 'Тема';
         }
         
-        // Обработчик клика по кнопке темы
         themeToggle.addEventListener('click', function() {
             document.body.classList.toggle('light-theme');
             

@@ -2,7 +2,6 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Genre(models.Model):
-    """Модель жанра фильма"""
     name = models.CharField(max_length=100, unique=True, verbose_name="Название жанра")
     
     def __str__(self):
@@ -14,14 +13,12 @@ class Genre(models.Model):
         ordering = ['name']
 
 class Film(models.Model):
-    """Модель фильма"""
     title = models.CharField(max_length=200, verbose_name="Название фильма")
     description = models.TextField(verbose_name="Описание", blank=True, null=True)
     year = models.IntegerField(verbose_name="Год выпуска")
     genres = models.ManyToManyField(Genre, verbose_name="Жанры", blank=True)
     director = models.CharField(max_length=200, verbose_name="Режиссёр", blank=True, null=True)
     
-    # Загрузка постера
     poster = models.ImageField(
         upload_to='posters/', 
         verbose_name="Постер фильма", 
@@ -30,7 +27,6 @@ class Film(models.Model):
         help_text="Загрузите постер фильма (JPG, PNG)"
     )
     
-    # Загрузка видео файла трейлера
     trailer_file = models.FileField(
         upload_to='trailers/',
         verbose_name="Видеофайл трейлера",
@@ -42,13 +38,11 @@ class Film(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
     
     def get_poster_url(self):
-        """Возвращает URL постера"""
         if self.poster:
             return self.poster.url
         return ''
     
     def get_trailer_url(self):
-        """Возвращает URL видеофайла трейлера"""
         if self.trailer_file:
             return self.trailer_file.url
         return ''
@@ -64,7 +58,6 @@ class Film(models.Model):
         return f"{self.title} ({self.year})"
     
     def display_genres(self):
-        """Возвращает строку с жанрами для админки"""
         return ", ".join([genre.name for genre in self.genres.all()])
     display_genres.short_description = 'Жанры'
     
@@ -74,7 +67,6 @@ class Film(models.Model):
         ordering = ['-created_at']
 
 class Review(models.Model):
-    """Модель отзыва к фильму"""
     film = models.ForeignKey(Film, on_delete=models.CASCADE, related_name='reviews', verbose_name="Фильм")
     name = models.CharField(max_length=100, verbose_name="Имя")
     email = models.EmailField(verbose_name="Email")

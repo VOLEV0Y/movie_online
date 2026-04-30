@@ -1022,3 +1022,26 @@ body.light-theme .copyright {
     color: #666;
     border-top: 1px solid rgba(0, 102, 204, 0.3);
 }
+
+#trailerVideo {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    background: #000;
+}
+
+.video-controls-fallback {
+    display: none;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.video-controls-fallback button {
+    background: #0088ff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin: 0 5px;
+    cursor: pointer;
+}

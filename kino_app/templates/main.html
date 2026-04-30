@@ -14,7 +14,6 @@
         </div>
         
         <div class="header-controls">
-            <!-- Фильтр по жанрам -->
             <div class="genre-filter-container">
                 <button type="button" class="filter-btn" id="filterToggle">
                     <span>🎬 Фильтр по жанрам</span>
@@ -50,7 +49,6 @@
                 </div>
             </div>
             
-            <!-- Поиск -->
             <form action="{% url 'home' %}" method="get" class="search-box">
                 <input type="text" name="search" placeholder="Поиск..." 
                        value="{{ search|default:'' }}">
@@ -58,15 +56,12 @@
             </form>
         </div>
         
-        <!-- Кнопки справа -->
         <div class="header-right-buttons">
-            <!-- Кнопка переключения темы -->
             <div class="theme-toggle" id="themeToggle">
                 <span class="theme-icon">🌙</span>
                 <span>Тема</span>
             </div>
             
-            <!-- GitHub -->
             <a href="https://github.com/VOLEV0Y" target="_blank" class="github-link">
                 <span class="github-icon">💻</span>
                 <span>GitHub</span>
@@ -74,7 +69,6 @@
         </div>
     </header>
     
-    <!-- Выбранные жанры -->
     {% if selected_genres %}
     <div style="max-width: 1300px; margin: 10px auto; padding: 0 20px;">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -145,26 +139,22 @@
     </footer>
     
     <script>
-        // Управление фильтром
         let isFilterOpen = false;
         const filterToggle = document.getElementById('filterToggle');
         const filterDropdown = document.getElementById('filterDropdown');
         
         if (filterToggle && filterDropdown) {
-            // Показать/скрыть фильтр
             filterToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
                 toggleFilter();
             });
             
-            // Закрыть при клике вне фильтра
             document.addEventListener('click', function(e) {
                 if (isFilterOpen && !filterDropdown.contains(e.target) && !filterToggle.contains(e.target)) {
                     closeFilter();
                 }
             });
             
-            // Закрыть при нажатии Esc
             document.addEventListener('keydown', function(e) {
                 if (isFilterOpen && e.key === 'Escape') {
                     closeFilter();
@@ -190,7 +180,6 @@
         }
         
         function updateForm() {
-            // Можно добавить логику для предварительного обновления формы
             console.log('Жанры обновлены');
         }
         
@@ -204,11 +193,9 @@
             document.getElementById('genreForm').submit();
         }
         
-        // Функция переключения темы
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = themeToggle.querySelector('.theme-icon');
         
-        // Проверяем сохраненную тему в localStorage
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.body.classList.add('light-theme');
@@ -220,7 +207,6 @@
             themeToggle.querySelector('span:last-child').textContent = 'Тема';
         }
         
-        // Обработчик клика по кнопке темы
         themeToggle.addEventListener('click', function() {
             document.body.classList.toggle('light-theme');
             
